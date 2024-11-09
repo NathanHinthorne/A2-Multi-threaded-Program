@@ -6,24 +6,26 @@
  *  TCSS 422 - Operating Systems
  */
 
+#include <stdio.h> // added line
+
 #define ROW 5
 #define COL 5
 
 typedef struct matrix {
   int rows;
   int cols;
-  int ** m;
+  int** m;
 } Matrix;
 
 //extern int theseed;
 
 // MATRIX ROUTINES
-Matrix * AllocMatrix(int r, int c);
-void FreeMatrix(Matrix * mat);
-void GenMatrix(Matrix * mat);
-Matrix * GenMatrixRandom();
-int AvgElement(Matrix * mat);
-int SumMatrix(Matrix * mat);
-Matrix * MatrixMultiply(Matrix * m1, Matrix * m2);
-void DisplayMatrix(Matrix * mat, FILE *stream);
-Matrix * GenMatrixBySize(int row, int col);
+Matrix* AllocMatrix(int r, int c);
+void FreeMatrix(Matrix* mat);
+void GenMatrix(Matrix* mat);
+Matrix* GenMatrixRandom();
+int AvgElement(Matrix* mat);
+int SumMatrix(Matrix* mat);
+Matrix* MatrixMultiply(Matrix* m1, Matrix* m2);
+void DisplayMatrix(Matrix* mat, FILE* stream);
+Matrix* GenMatrixBySize(int row, int col);
