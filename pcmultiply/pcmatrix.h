@@ -6,14 +6,14 @@
  *  TCSS 422 - Operating Systems
  */
 
-// Number of worker threads - NUMWORK producers, NUMWORK consumers
+ // Number of worker threads - NUMWORK producers, NUMWORK consumers
 #define NUMWORK 1
 
 // Constant for enabling and disabling DEBUG output
 #define OUTPUT 0
 
 // Size of the buffer ARRAY  (see ch. 30, section 2, producer/consumer)
-#define MAX 200
+#define MAX 5
 int BOUNDED_BUFFER_SIZE;
 
 // Number of matrices to produce/consume

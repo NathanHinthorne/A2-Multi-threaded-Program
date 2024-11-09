@@ -1,3 +1,4 @@
+
 /*
  *  pcmatrix module
  *  Primary module providing control flow for the pcMatrix program
@@ -88,7 +89,17 @@ int main(int argc, char* argv[])
   srand((unsigned)time(&t));
 
   Matrix** buffer = initBoundedBuffer();
+  put(GenMatrixRandom()); // should get overwritten
   put(GenMatrixRandom());
+  put(GenMatrixRandom());
+  put(GenMatrixRandom());
+  put(GenMatrixRandom());
+  put(GenMatrixRandom());
+  get();
+  get();
+  get();
+  get();
+  get();
   get();
   for (int n = 0; n < BOUNDED_BUFFER_SIZE; n++) {
     free(buffer[n]);

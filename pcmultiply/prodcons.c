@@ -68,6 +68,7 @@ int put(Matrix* value)
 
 Matrix* get()
 {
+  bufferSize--;
   assert(bufferSize > 0); // there must be at least 1 matrix to retrieve
 
   Matrix* value = bigMatrix[tailIndex];
