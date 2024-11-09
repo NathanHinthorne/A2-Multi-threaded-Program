@@ -6,7 +6,7 @@
  *  TCSS 422 - Operating Systems
  */
 
-Matrix ** bigmatrix;
+Matrix** bigmatrix;
 
 // PRODUCER-CONSUMER put() get() function prototypes
 
@@ -21,9 +21,11 @@ typedef struct prodcons {
 } ProdConsStats;
 
 // PRODUCER-CONSUMER thread method function prototypes
-void *prod_worker(void *arg);
-void *cons_worker(void *arg);
+void* prod_worker(void* arg);
+void* cons_worker(void* arg);
 
 // Routines to add and remove matrices from the bounded buffer
-int put(Matrix *value);
-Matrix * get();
+Matrix** initBoundedBuffer();
+int put(Matrix* value);
+Matrix* get();
+

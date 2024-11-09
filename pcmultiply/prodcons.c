@@ -1,18 +1,19 @@
 /*
- *  prodcons module
- *  Producer Consumer module
- *
- *  Implements routines for the producer consumer module based on
- *  chapter 30, section 2 of Operating Systems: Three Easy Pieces
- *
- *  University of Washington, Tacoma
- *  TCSS 422 - Operating Systems
- */
+*prodcons module
+* Producer Consumer module
+*
+*Implements routines for the producer consumer module based on
+* chapter 30, section 2 of Operating Systems : Three Easy Pieces
+*
+*University of Washington, Tacoma
+* TCSS 422 - Operating Systems
+*/
 
- // Include only libraries for this module
+// Include only libraries for this module
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <assert.h>
 #include "counter.h"
 #include "matrix.h"
 #include "pcmatrix.h"
@@ -24,7 +25,13 @@ int topIndex = 0;
 
 // Probably init in main.
 Matrix** initBoundedBuffer() {
+
   buffer = (Matrix**)malloc(sizeof(Matrix*) * BOUNDED_BUFFER_SIZE);
+  for (int n = 0; n < BOUNDED_BUFFER_SIZE; n++) {
+    buffer[n] = (Matrix*)malloc(sizeof(Matrix));
+  }
+  printf("Initialized buffer!");
+  printf("BOUNDED_BUFFER_SIZE=%d", BOUNDED_BUFFER_SIZE);
   return buffer;
 }
 
@@ -33,10 +40,9 @@ Matrix** initBoundedBuffer() {
 // Bounded buffer put() get()
 int put(Matrix* value)
 {
-  // push all values forward.
-  // check if final value is going to be at n+1 then put it at 0.
-  // if queue is full and new item is put on then place at front and delte final item.
   buffer[topIndex] = value;
+
+  DisplayMatrix(value, stdout);
 
   topIndex = (topIndex + 1) % BOUNDED_BUFFER_SIZE;
   count += 1;
@@ -46,7 +52,7 @@ Matrix* get()
 {
   assert(count > 0); // there must be at least 1 matrix to retrieve
   count -= 1;
-  return buffer[count];
+  return buffer[count]; // probably wrong
 }
 
 
