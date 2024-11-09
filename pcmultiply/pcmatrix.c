@@ -89,6 +89,7 @@ int main(int argc, char* argv[])
 
   Matrix** buffer = initBoundedBuffer();
   put(GenMatrixRandom());
+  get();
   for (int n = 0; n < BOUNDED_BUFFER_SIZE; n++) {
     free(buffer[n]);
   }
