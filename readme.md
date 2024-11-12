@@ -1,5 +1,4 @@
-Chatgpt gave me this command to complie code and link the object files.
-gcc -pthread -I. -Wall -Wno-int-conversion -D_GNU_SOURCE -fcommon counter.c prodcons.c matrix.c pcmatrix.c -o pcmatrix
+# Multi-threaded Matrix Multiplication
 
 ## Tasks
 
@@ -16,3 +15,12 @@ gcc -pthread -I. -Wall -Wno-int-conversion -D_GNU_SOURCE -fcommon counter.c prod
 - [ ] Task 5 – Create one producer pthread and one consumer pthread in pcmatrix.c to launch the parallel matrix production and multiplication.  
 
 - [ ] Tasks 6- Once a 1 producer and 1 consumer version of the program is working correctly, refactor pcmatrix.c to use an array of producer threads, and an array of consumer threads. The array size is numw. (Extra credit for correct implementation of 3 or more producer/consumer pthreads).
+
+## Citations
+
+Chatgpt gave us this command to complie code and link the object files.
+gcc -pthread -I. -Wall -Wno-int-conversion -D_GNU_SOURCE -fcommon counter.c prodcons.c matrix.c pcmatrix.c -o pcmatrix
+
+## Credits
+
+Developed by Nathan Hinthorne and Caleb Krauter
