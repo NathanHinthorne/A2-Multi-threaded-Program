@@ -9,7 +9,7 @@
  * TCSS 422 - Operating Systems
  */
 
-// Include only libraries for this module
+ // Include only libraries for this module
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -19,19 +19,19 @@
 #include "pcmatrix.h"
 #include "prodcons.h"
 
-Matrix **bigMatrix;
+Matrix** bigMatrix;
 int bufferSize = 0;
 int headIndex = 0;
 int tailIndex = 0;
 
 // Probably init in main.
-Matrix **initBoundedBuffer()
+Matrix** initBoundedBuffer()
 {
 
-  bigMatrix = (Matrix **)malloc(sizeof(Matrix *) * BOUNDED_BUFFER_SIZE);
+  bigMatrix = (Matrix**)malloc(sizeof(Matrix*) * BOUNDED_BUFFER_SIZE);
   for (int n = 0; n < BOUNDED_BUFFER_SIZE; n++)
   {
-    bigMatrix[n] = (Matrix *)malloc(sizeof(Matrix));
+    bigMatrix[n] = (Matrix*)malloc(sizeof(Matrix));
   }
   return bigMatrix;
 }
@@ -39,7 +39,7 @@ Matrix **initBoundedBuffer()
 // Define Locks, Condition variables, and so on here
 
 // Bounded buffer put() get()
-int put(Matrix *value)
+int put(Matrix* value)
 {
   bigMatrix[headIndex] = value;
   printf("PUT Matrix:");
@@ -55,12 +55,12 @@ int put(Matrix *value)
   bufferSize += 1;
 }
 
-Matrix *get()
+Matrix* get()
 {
   bufferSize--;
   assert(bufferSize > 0); // there must be at least 1 matrix to retrieve
 
-  Matrix *value = bigMatrix[tailIndex];
+  Matrix* value = bigMatrix[tailIndex];
 
   printf("GET Matrix:");
   DisplayMatrix(value, stdout);
@@ -71,14 +71,43 @@ Matrix *get()
   }
 }
 
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; // declare/init a lock
+pthread_cond_t cv = PTHREAD_COND_INITIALIZER;   // declare/init a CV
+
 // Matrix PRODUCER worker thread
-void *prod_worker(void *arg)
+void* prod_worker(void* arg)
 {
+  Matrix* randomMatrix = GenMatrixRandom();
+  // pthread_mutex_init();
+
+  // critical section
+  pthread_mutex_lock(&mutex);
+
+  //TODO keep waiting when buffer is full
+  while (bufferSize >= BOUNDED_BUFFER_SIZE)
+  {
+    pthread_cond_wait(&cv, &mutex);
+  }
+
+
+  put(randomMatrix);
+
+  //TODO increment counter (indicating a new matrix was added)
+  bufferSize++;
+
+  //TODO signal consumers
+  // pthread_cond_signal()
+
+
+  pthread_mutex_unlock(&mutex);
+
   return NULL;
 }
 
 // Matrix CONSUMER worker thread
-void *cons_worker(void *arg)
+void* cons_worker(void* arg)
 {
+
+  get();
   return NULL;
 }

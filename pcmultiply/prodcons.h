@@ -28,4 +28,6 @@ void* cons_worker(void* arg);
 Matrix** initBoundedBuffer();
 int put(Matrix* value);
 Matrix* get();
+Matrix* GenMatrixRandom();
+
 
