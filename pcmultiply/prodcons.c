@@ -91,7 +91,7 @@ pthread_cond_t not_empty = PTHREAD_COND_INITIALIZER;
 // Matrix PRODUCER worker thread
 void *prod_worker(void *arg)
 {
-  // TODO loop this WHOLE section of code using a for loop. repeat until the given global constant for num of matrices has been reached
+  // TODO loop this WHOLE section of code using a while loop. repeat until the given global constant for num of matrices has been reached by counters->prod
   Matrix *randomMatrix = GenMatrixRandom();
 
   // critical section
