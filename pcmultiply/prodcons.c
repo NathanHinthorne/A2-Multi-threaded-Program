@@ -120,5 +120,7 @@ void *prod_worker(void *arg)
 void *cons_worker(void *arg)
 {
   // TODO remember to call FreeMatrix() after you're done using it
+
+  // TODO take ONE matrix at a time. once you have two, check to make sure matrix multiplication is possible
   return NULL;
 }
