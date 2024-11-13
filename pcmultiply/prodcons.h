@@ -13,7 +13,7 @@ Matrix** bigmatrix;
 // Data structure to track matrix production / consumption stats
 // sumtotal - total of all elements produced or consumed
 // multtotal - total number of matrices multipled
-// matrixtotal - total number of matrces produced or consumed
+// matrixtotal - total number of matrices produced or consumed
 typedef struct prodcons {
   int sumtotal;
   int multtotal;
@@ -29,5 +29,5 @@ Matrix** initBoundedBuffer();
 int put(Matrix* value);
 Matrix* get();
 Matrix* GenMatrixRandom();
-
+void init_cnt(counter_t* c);
 

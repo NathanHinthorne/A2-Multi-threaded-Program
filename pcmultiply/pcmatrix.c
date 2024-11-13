@@ -84,6 +84,8 @@ int main(int argc, char* argv[])
     printf("USING: worker_threads=%d bounded_buffer_size=%d matricies=%d matrix_mode=%d\n", numw, BOUNDED_BUFFER_SIZE, NUMBER_OF_MATRICES, MATRIX_MODE);
   }
 
+
+
   time_t t;
   // Seed the random number generator with the system time
   srand((unsigned)time(&t));

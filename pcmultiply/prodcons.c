@@ -20,19 +20,25 @@
 #include "prodcons.h"
 
 Matrix** bigMatrix;
-int bufferSize = 0;
 int headIndex = 0;
 int tailIndex = 0;
+int bufferSize = 0;
+
+counters_t* counters;
 
 // Probably init in main.
 Matrix** initBoundedBuffer()
 {
-
   bigMatrix = (Matrix**)malloc(sizeof(Matrix*) * BOUNDED_BUFFER_SIZE);
   for (int n = 0; n < BOUNDED_BUFFER_SIZE; n++)
   {
     bigMatrix[n] = (Matrix*)malloc(sizeof(Matrix));
   }
+
+  // TODO fix segmentation fault.
+  // init_cnt(&counters->prod);
+  // init_cnt(&counters->cons);
+
   return bigMatrix;
 }
 
@@ -52,12 +58,11 @@ int put(Matrix* value)
     tailIndex = (tailIndex + 1) % BOUNDED_BUFFER_SIZE;
   }
 
-  bufferSize += 1;
+  bufferSize++;
 }
 
 Matrix* get()
 {
-  bufferSize--;
   assert(bufferSize > 0); // there must be at least 1 matrix to retrieve
 
   Matrix* value = bigMatrix[tailIndex];
@@ -69,16 +74,19 @@ Matrix* get()
   {
     tailIndex = (tailIndex + 1) % BOUNDED_BUFFER_SIZE;
   }
+
+  bufferSize--;
 }
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; // declare/init a lock
-pthread_cond_t cv = PTHREAD_COND_INITIALIZER;   // declare/init a CV
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t not_full = PTHREAD_COND_INITIALIZER;
+pthread_cond_t not_empty = PTHREAD_COND_INITIALIZER;
+
 
 // Matrix PRODUCER worker thread
 void* prod_worker(void* arg)
 {
   Matrix* randomMatrix = GenMatrixRandom();
-  // pthread_mutex_init();
 
   // critical section
   pthread_mutex_lock(&mutex);
@@ -86,18 +94,16 @@ void* prod_worker(void* arg)
   //TODO keep waiting when buffer is full
   while (bufferSize >= BOUNDED_BUFFER_SIZE)
   {
-    pthread_cond_wait(&cv, &mutex);
+    pthread_cond_wait(&not_full, &mutex);
   }
-
 
   put(randomMatrix);
 
   //TODO increment counter (indicating a new matrix was added)
-  bufferSize++;
+  increment_cnt(&counters->cons);
 
   //TODO signal consumers
-  // pthread_cond_signal()
-
+  pthread_cond_signal(&not_empty);
 
   pthread_mutex_unlock(&mutex);
 
@@ -108,6 +114,6 @@ void* prod_worker(void* arg)
 void* cons_worker(void* arg)
 {
 
-  get();
+  // get();
   return NULL;
 }

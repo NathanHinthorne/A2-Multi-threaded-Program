@@ -6,20 +6,20 @@
  *  TCSS 422 - Operating Systems
  */
 
-// SYNCHRONIZED COUNTER
+ // SYNCHRONIZED COUNTER
 
-// counter structures
+ // counter structures
 typedef struct __counter_t {
   int value;
   pthread_mutex_t  lock;
 } counter_t;
 
 typedef struct __counters_t {
-  counter_t * prod;
-  counter_t * cons;
+  counter_t* prod;
+  counter_t* cons;
 } counters_t;
 
 // counter methods
-void init_cnt(counter_t *c);
-void increment_cnt(counter_t *c);
-int get_cnt(counter_t *c);
+void init_cnt(counter_t* c);
+void increment_cnt(counter_t* c);
+int get_cnt(counter_t* c);
