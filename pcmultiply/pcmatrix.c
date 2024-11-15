@@ -91,58 +91,7 @@ int main(int argc, char* argv[])
   srand((unsigned)time(&t));
 
   Matrix** buffer = initBoundedBuffer();
-  put(GenMatrixRandom()); // should get overwritten
-  put(GenMatrixRandom());
-  put(GenMatrixRandom());
-  put(GenMatrixRandom());
-  put(GenMatrixRandom());
-  put(GenMatrixRandom());
-  get();
-  get();
-  get();
-  get();
-  get();
-  get();
-  for (int n = 0; n < BOUNDED_BUFFER_SIZE; n++) {
-    free(buffer[n]);
-  }
-  free(buffer);
-  // put(GenMatrixRandom());
-
-
-  //
-  // Demonstration code to show the use of matrix routines
-  //
-  // DELETE THIS CODE FOR YOUR SUBMISSION
-  // ----------------------------------------------------------
-  // bigmatrix = (Matrix**)malloc(sizeof(Matrix*) * BOUNDED_BUFFER_SIZE);
-  // printf("MATRIX MULTIPLICATION DEMO:\n\n");
-  // Matrix* m1, * m2, * m3;
-  // for (int i = 0;i < NUMBER_OF_MATRICES;i++)
-  // {
-  //   m1 = GenMatrixRandom();
-  //   m2 = GenMatrixRandom();
-  //   m3 = MatrixMultiply(m1, m2);
-  //   if (m3 != NULL)
-  //   {
-  //     DisplayMatrix(m1, stdout);
-  //     printf("    X\n");
-  //     DisplayMatrix(m2, stdout);
-  //     printf("    =\n");
-  //     DisplayMatrix(m3, stdout);
-  //     printf("\n");
-  //     FreeMatrix(m3);
-  //     FreeMatrix(m2);
-  //     FreeMatrix(m1);
-  //     m1 = NULL;
-  //     m2 = NULL;
-  //     m3 = NULL;
-  //   }
-  // }
-  return 0;
-  // ----------------------------------------------------------
-
-
+  initCounters();
 
   printf("Producing %d matrices in mode %d.\n", NUMBER_OF_MATRICES, MATRIX_MODE);
   printf("Using a shared buffer of size=%d\n", BOUNDED_BUFFER_SIZE);
@@ -150,24 +99,33 @@ int main(int argc, char* argv[])
   printf("\n");
 
   // Here is an example to define one producer and one consumer
-  pthread_t pr;
-  pthread_t co;
+  pthread_t producerThread;
+  pthread_t consumerThread;
 
   // Add your code here to create threads and so on
-
+  Matrix* matrix = GenMatrixRandom();
+  pthread_create(&producerThread, NULL, prod_worker, (void*)matrix);
+  pthread_create(&consumerThread, NULL, cons_worker, NULL);
+  pthread_join(&producerThread, NULL);
+  pthread_join(&consumerThread, NULL);
 
   // These are used to aggregate total numbers for main thread output
-  int prs = 0; // total #matrices produced
-  int cos = 0; // total #matrices consumed
-  int prodtot = 0; // total sum of elements for matrices produced
-  int constot = 0; // total sum of elements for matrices consumed
-  int consmul = 0; // total # multiplications
+  int prs = get_cnt(&totalMatrices->prod); // total #matrices produced
+  int cos = get_cnt(&totalMatrices->cons); // total #matrices consumed
+  // int prodtot = get_cnt(&); // total sum of elements for matrices produced
+  // int constot = get_cnt(&); // total sum of elements for matrices consumed
+  // int consmul = get_cnt(&); // total # multiplications
+  free(&totalMatrices->prod);
+  free(&totalMatrices->cons);
 
   // consume ProdConsStats from producer and consumer threads [HINT: return from join]
   // add up total matrix stats in prs, cos, prodtot, constot, consmul
-
-  printf("Sum of Matrix elements --> Produced=%d = Consumed=%d\n", prs, cos);
-  printf("Matrices produced=%d consumed=%d multiplied=%d\n", prodtot, constot, consmul);
-
+  // TODO fix Juhua's bug in the print statements.
+  // printf("Sum of Matrix elements --> Produced=%d = Consumed=%d\n", prs, cos);
+  // printf("Matrices produced=%d consumed=%d multiplied=%d\n", prodtot, constot, consmul);
+  for (int n = 0; n < BOUNDED_BUFFER_SIZE; n++) {
+    FreeMatrix(buffer[n]);
+  }
+  free(buffer);
   return 0;
 }

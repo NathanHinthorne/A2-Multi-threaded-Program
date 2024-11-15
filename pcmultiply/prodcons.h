@@ -7,6 +7,7 @@
  */
 
 Matrix** bigmatrix;
+counters_t* totalMatrices;
 
 // PRODUCER-CONSUMER put() get() function prototypes
 

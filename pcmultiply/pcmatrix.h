@@ -25,3 +25,4 @@ int NUMBER_OF_MATRICES;
 // mode 1-n - Specifies a fixed number of rows and cols with matrix elements of 1
 #define DEFAULT_MATRIX_MODE 0
 int MATRIX_MODE;
+
