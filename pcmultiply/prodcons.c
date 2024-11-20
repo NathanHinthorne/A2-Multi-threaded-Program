@@ -9,7 +9,7 @@
  * TCSS 422 - Operating Systems
  */
 
- // Include only libraries for this module
+// Include only libraries for this module
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -19,92 +19,105 @@
 #include "pcmatrix.h"
 #include "prodcons.h"
 
-Matrix** bigMatrix;
+Matrix **buffer;
 int headIndex = 0;
 int tailIndex = 0;
-int bufferSize = 0;
+int currBufferSize = 0;
 
-Matrix** initBoundedBuffer()
+Matrix **initBoundedBuffer()
 {
-  bigMatrix = (Matrix**)malloc(sizeof(Matrix*) * BOUNDED_BUFFER_SIZE);
-  for (int n = 0; n < BOUNDED_BUFFER_SIZE; n++)
+  buffer = (Matrix **)malloc(sizeof(Matrix *) * MAX_BOUNDED_BUFFER_SIZE);
+  for (int n = 0; n < MAX_BOUNDED_BUFFER_SIZE; n++)
   {
-    bigMatrix[n] = (Matrix*)malloc(sizeof(Matrix));
+    buffer[n] = (Matrix *)malloc(sizeof(Matrix));
   }
 
-  return bigMatrix;
-}
-
-counters_t* totalMatrices;
-
-void initCounters()
-{
-  counter_t* prod = (counter_t*)malloc(sizeof(counter_t));
-  counter_t* con = (counter_t*)malloc(sizeof(counter_t));
-
-  init_cnt(&totalMatrices->prod);
-  init_cnt(&totalMatrices->cons);
+  return buffer;
 }
 
 // Define Locks, Condition variables, and so on here
 
 // Bounded buffer put() get()
-int put(Matrix* value)
+int put(Matrix *value)
 {
-  bigMatrix[headIndex] = value;
-  printf("PUT Matrix:");
-  DisplayMatrix(bigMatrix[headIndex], stdout);
+  buffer[headIndex] = value;
+  printf("PUT Matrix:\n");
+  DisplayMatrix(buffer[headIndex], stdout);
 
-  headIndex = (headIndex + 1) % BOUNDED_BUFFER_SIZE;
+  headIndex = (headIndex + 1) % MAX_BOUNDED_BUFFER_SIZE;
 
   if (headIndex == tailIndex) // when head runs into tail
   {
-    tailIndex = (tailIndex + 1) % BOUNDED_BUFFER_SIZE;
+    tailIndex = (tailIndex + 1) % MAX_BOUNDED_BUFFER_SIZE;
   }
 
-  bufferSize++;
+  currBufferSize++;
+  return 0;
 }
 
-Matrix* get()
+Matrix *get()
 {
-  assert(bufferSize > 0); // there must be at least 1 matrix to retrieve
+  assert(currBufferSize > 0); // there must be at least 1 matrix to retrieve
 
-  Matrix* value = bigMatrix[tailIndex];
+  Matrix *value = buffer[tailIndex];
 
-  printf("GET Matrix:");
+  printf("GET Matrix:\n");
   DisplayMatrix(value, stdout);
-
   if (headIndex != tailIndex)
   {
-    tailIndex = (tailIndex + 1) % BOUNDED_BUFFER_SIZE;
+    tailIndex = (tailIndex + 1) % MAX_BOUNDED_BUFFER_SIZE;
   }
 
-  bufferSize--;
+  currBufferSize--;
+  return value;
 }
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t not_full = PTHREAD_COND_INITIALIZER;
 pthread_cond_t not_empty = PTHREAD_COND_INITIALIZER;
 
+/*
+ pthread_create requires this EXACT signature for thread functions:
+ void *thread_function(void *arg)
+
+ This is because:
+  pthread_create is designed to work with ANY type of thread function
+  It can 't know in advance what specific type you' ll want to return void *
+  is a "generic pointer" that can point to any type
+  This makes pthread_create flexible and reusable
+*/
+
 // Matrix PRODUCER worker thread
-void* prod_worker(void* arg)
+void *prod_worker(void *arg)
 {
-  // TODO loop this WHOLE section of code using a while loop. repeat until the given global constant for num of matrices has been reached by totalMatrices->prod
-  while (get_cnt(&totalMatrices->prod) < NUMBER_OF_MATRICES)
+  // get counter from args
+  counter_t *prodCounter = (counter_t *)arg;
+
+  // Individual stats for this thread
+  ProdConsStats *prodStats = (ProdConsStats *)(malloc(sizeof(ProdConsStats)));
+
+  while (get_cnt(prodCounter) < NUMBER_OF_MATRICES)
   {
     // critical section
     pthread_mutex_lock(&mutex);
 
     // keep waiting when buffer is full
-    while (bufferSize >= BOUNDED_BUFFER_SIZE)
+    while (currBufferSize >= MAX_BOUNDED_BUFFER_SIZE)
     {
+      printf("DEBUG: Buffer is full\n");
       pthread_cond_wait(&not_full, &mutex);
     }
 
-    put((Matrix*)arg);
+    Matrix *matrix = GenMatrixRandom();
+
+    put(matrix);
+
+    // Update this thread's statistics
+    prodStats->matrixtotal++;
+    prodStats->sumtotal += SumMatrix(matrix);
 
     // increment counter (indicating a new matrix was added)
-    increment_cnt(&totalMatrices->cons);
+    increment_cnt(prodCounter);
 
     // signal consumers
     pthread_cond_signal(&not_empty);
@@ -112,39 +125,81 @@ void* prod_worker(void* arg)
     pthread_mutex_unlock(&mutex);
   }
 
-  return NULL;
+  return (void *)prodStats;
 }
 
 // Matrix CONSUMER worker thread
-void* cons_worker(void* arg)
+void *cons_worker(void *arg)
 {
-  while (get_cnt(&totalMatrices->cons) < NUMBER_OF_MATRICES)
+  // get counter from args
+  counter_t *consCounter = (counter_t *)arg;
+
+  // Individual stats for this thread
+  ProdConsStats *consStats = (ProdConsStats *)(malloc(sizeof(ProdConsStats)));
+  Matrix *m1, *m2, *m3;
+
+  while (get_cnt(consCounter) < NUMBER_OF_MATRICES)
   {
+    // critical section
     pthread_mutex_lock(&mutex);
 
-    // keep waiting when buffer is full
-    while (bufferSize >= BOUNDED_BUFFER_SIZE)
+    // keep waiting when buffer is empty
+    while (currBufferSize <= 0)
     {
       pthread_cond_wait(&not_full, &mutex);
     }
 
-    Matrix* curMatrix1 = get();
-    Matrix* curMatrix2 = get();
+    m1 = get();
+    consStats->matrixtotal++; // Count consumption
+    consStats->sumtotal += SumMatrix(m1);
+    increment_cnt(consCounter);
 
-    // increment counter (indicating a new matrix was added)
-    increment_cnt(&totalMatrices->cons);
+    /* Originally, we were grabbing
+    two matrices on every step of the while loop in prod_worker().
+    Claude.ai gave us code to grab one matrix at a time. */
 
-    // signal consumers
-    DisplayMatrix(curMatrix1, stdout);
-    DisplayMatrix(curMatrix2, stdout);
-    Matrix* matrixProduct = MatrixMultiply(curMatrix1, curMatrix2); //TODO check dimensions before multiplying
-    DisplayMatrix(matrixProduct, stdout);
-    FreeMatrix(curMatrix1);
-    FreeMatrix(curMatrix2);
-    FreeMatrix(matrixProduct);
-    pthread_cond_signal(&not_empty);
+    int matrixIsValid = 0;
+    while (!matrixIsValid)
+    {
+      // keep waiting when buffer is empty
+      // TODO check that this is good, maybe a chance that get is still producing and consumer won't consume the last matrix becasue it returned.
+      // TODO consider calling pthread_cond_wait
+      if (currBufferSize <= 0)
+      {
+        return (void *)consStats;
+      }
+      m2 = get();
+      consStats->matrixtotal++; // Count consumption
+      consStats->sumtotal += SumMatrix(m2);
+      increment_cnt(consCounter);
+
+      m3 = MatrixMultiply(m1, m2);
+      if (m3 != NULL)
+      {
+        consStats->multtotal++; // Count successful multiplication
+        matrixIsValid = 1;
+      }
+      else
+      {
+        FreeMatrix(m2); // Invalid M2, try another
+      }
+    }
+
+    DisplayMatrix(m1, stdout);
+    printf("X\n");
+    DisplayMatrix(m2, stdout);
+    printf("=\n");
+    DisplayMatrix(m3, stdout);
+
+    FreeMatrix(m1);
+    FreeMatrix(m2);
+    FreeMatrix(m3);
+
+    // signal producers
+    pthread_cond_signal(&not_full);
+
     pthread_mutex_unlock(&mutex);
   }
 
-  return NULL;
+  return (void *)consStats;
 }

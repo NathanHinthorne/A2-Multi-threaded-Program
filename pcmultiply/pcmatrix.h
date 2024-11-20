@@ -6,18 +6,18 @@
  *  TCSS 422 - Operating Systems
  */
 
- // Number of worker threads - NUMWORK producers, NUMWORK consumers
+// Number of worker threads - NUMWORK producers, NUMWORK consumers
 #define NUMWORK 1
 
 // Constant for enabling and disabling DEBUG output
 #define OUTPUT 0
 
 // Size of the buffer ARRAY  (see ch. 30, section 2, producer/consumer)
-#define MAX 5
-int BOUNDED_BUFFER_SIZE;
+#define MAX 10
+int MAX_BOUNDED_BUFFER_SIZE;
 
 // Number of matrices to produce/consume
-#define LOOPS 1200
+#define LOOPS 10
 int NUMBER_OF_MATRICES;
 
 // MATRIX MODE FLAG
@@ -25,4 +25,3 @@ int NUMBER_OF_MATRICES;
 // mode 1-n - Specifies a fixed number of rows and cols with matrix elements of 1
 #define DEFAULT_MATRIX_MODE 0
 int MATRIX_MODE;
-
