@@ -128,8 +128,8 @@ int main(int argc, char *argv[])
 
   // consume ProdConsStats from producer and consumer threads [HINT: return from join]
   // add up total matrix stats in prs, cos, prodtot, constot, consmul
-  printf("Sum of Matrix elements --> Produced=%d = Consumed=%d\n", prs, cos);
-  printf("Matrices produced=%d consumed=%d multiplied=%d\n", prodtot, constot, consmul);
+  printf("Sum of Matrix elements --> Produced=%d = Consumed=%d\n", prodtot, constot);
+  printf("Matrices produced=%d consumed=%d multiplied=%d\n", prs, cos, consmul);
 
   // free buffer
   for (int n = 0; n < MAX_BOUNDED_BUFFER_SIZE; n++)

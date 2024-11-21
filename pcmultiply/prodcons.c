@@ -87,6 +87,8 @@ pthread_cond_t not_empty = PTHREAD_COND_INITIALIZER;
   This makes pthread_create flexible and reusable
 */
 
+int finishedProducing = 0;
+
 // Matrix PRODUCER worker thread
 void *prod_worker(void *arg)
 {
@@ -125,6 +127,8 @@ void *prod_worker(void *arg)
     pthread_mutex_unlock(&mutex);
   }
 
+  finishedProducing = 1;
+
   return (void *)prodStats;
 }
 
@@ -146,7 +150,11 @@ void *cons_worker(void *arg)
     // keep waiting when buffer is empty
     while (currBufferSize <= 0)
     {
-      pthread_cond_wait(&not_full, &mutex);
+      pthread_cond_wait(&not_empty, &mutex);
+      if (finishedProducing == 1)
+      {
+        return (void *)consStats;
+      }
     }
 
     m1 = get();
@@ -164,9 +172,20 @@ void *cons_worker(void *arg)
       // keep waiting when buffer is empty
       // TODO check that this is good, maybe a chance that get is still producing and consumer won't consume the last matrix becasue it returned.
       // TODO consider calling pthread_cond_wait
-      if (currBufferSize <= 0)
+      // if (currBufferSize <= 0)
+      // {
+      //   return (void *)consStats;
+      // }
+      // keep waiting when buffer is empty
+      while (currBufferSize <= 0)
       {
-        return (void *)consStats;
+        printf("DEBUG: Buffer is empty\n");
+        pthread_cond_wait(&not_full, &mutex);
+        printf("DEBUG: Released\n");
+        if (finishedProducing == 1)
+        {
+          return (void *)consStats;
+        }
       }
       m2 = get();
       consStats->matrixtotal++; // Count consumption
