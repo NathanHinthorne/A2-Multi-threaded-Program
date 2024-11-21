@@ -150,11 +150,12 @@ void *cons_worker(void *arg)
     // keep waiting when buffer is empty
     while (currBufferSize <= 0)
     {
-      pthread_cond_wait(&not_empty, &mutex);
       if (finishedProducing == 1)
       {
+        printf("DEBUG: Returning from 1st while\n");
         return (void *)consStats;
       }
+      pthread_cond_wait(&not_empty, &mutex);
     }
 
     m1 = get();
@@ -180,12 +181,12 @@ void *cons_worker(void *arg)
       while (currBufferSize <= 0)
       {
         printf("DEBUG: Buffer is empty\n");
-        pthread_cond_wait(&not_full, &mutex);
-        printf("DEBUG: Released\n");
         if (finishedProducing == 1)
         {
+          printf("DEBUG: Returning from 2nd while\n");
           return (void *)consStats;
         }
+        pthread_cond_wait(&not_full, &mutex);
       }
       m2 = get();
       consStats->matrixtotal++; // Count consumption
