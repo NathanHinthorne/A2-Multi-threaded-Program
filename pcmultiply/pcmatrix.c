@@ -109,6 +109,7 @@ int main(int argc, char *argv[])
 
   for (int i = 0; i < numw; i++)
   {
+    // Create specified number of producer and consumer threads
     pthread_create(&prodWorkerThreads[i], NULL, prod_worker, counter->prod);
     pthread_create(&consWorkerThreads[i], NULL, cons_worker, counter->cons);
   }
@@ -120,7 +121,7 @@ int main(int argc, char *argv[])
   ProdConsStats *consStats;
   for (int i = 0; i < numw; i++)
   {
-
+    // wait for each thread to finish
     pthread_join(prodWorkerThreads[i], (void **)&prodStats);
     pthread_join(consWorkerThreads[i], (void **)&consStats);
 
