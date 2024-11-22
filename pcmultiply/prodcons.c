@@ -35,21 +35,35 @@ Matrix **initBoundedBuffer()
   return buffer;
 }
 
-// Define Locks, Condition variables, and so on here
-
 // Bounded buffer put() get()
 int put(Matrix *value)
 {
+  printf("Put's TailIndex %d\n", tailIndex);
+  printf("Put's HeadIndex %d\n", headIndex);
+  // Don't allow NULL matrices to be put into buffer
+  if (value == NULL)
+  {
+    printf("Error: Attempting to put NULL matrix\n");
+    return -1;
+  }
+
+  // Only put if there's space
+  if (get_cnt(currBufferSize) >= MAX_BOUNDED_BUFFER_SIZE)
+  {
+    printf("Error: Buffer full, cannot put matrix\n");
+    return -1;
+  }
+
   buffer[headIndex] = value;
   printf("PUT Matrix:\n");
   DisplayMatrix(buffer[headIndex], stdout);
 
   headIndex = (headIndex + 1) % MAX_BOUNDED_BUFFER_SIZE;
 
-  if (headIndex == tailIndex) // when head runs into tail
-  {
-    tailIndex = (tailIndex + 1) % MAX_BOUNDED_BUFFER_SIZE;
-  }
+  // if (headIndex == tailIndex) // when head runs into tail
+  // {
+  //   tailIndex = (tailIndex + 1) % MAX_BOUNDED_BUFFER_SIZE;
+  // }
 
   increment_cnt(currBufferSize);
   return 0;
@@ -58,15 +72,27 @@ int put(Matrix *value)
 Matrix *get()
 {
   assert(get_cnt(currBufferSize) > 0); // there must be at least 1 matrix to retrieve
+  printf("Get's TailIndex %d\n", tailIndex);
+  printf("Get's HeadIndex %d\n", headIndex);
+
+  if (buffer[tailIndex] == NULL)
+  {
+    // printf("Error: Attempting to get NULL matrix\n");
+    return NULL;
+  }
+
+  printf("Buffer[tailIndex]: \n");
+  DisplayMatrix(buffer[tailIndex], stdout);
+  printf("Matrix *value stored:\n");
 
   Matrix *value = buffer[tailIndex];
+  DisplayMatrix(value, stdout);
+  buffer[tailIndex] = NULL; // Clear the slot
 
   printf("GET Matrix:\n");
   DisplayMatrix(value, stdout);
-  if (headIndex != tailIndex)
-  {
-    tailIndex = (tailIndex + 1) % MAX_BOUNDED_BUFFER_SIZE;
-  }
+
+  tailIndex = (tailIndex + 1) % MAX_BOUNDED_BUFFER_SIZE;
 
   decrement_cnt(currBufferSize);
   return value;
@@ -75,17 +101,6 @@ Matrix *get()
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t not_full = PTHREAD_COND_INITIALIZER;
 pthread_cond_t not_empty = PTHREAD_COND_INITIALIZER;
-
-/*
- pthread_create requires this EXACT signature for thread functions:
- void *thread_function(void *arg)
-
- This is because:
-  pthread_create is designed to work with ANY type of thread function
-  It can 't know in advance what specific type you' ll want to return void *
-  is a "generic pointer" that can point to any type
-  This makes pthread_create flexible and reusable
-*/
 
 int finishedProducing = 0;
 
@@ -165,6 +180,14 @@ void *cons_worker(void *arg)
     }
 
     m1 = get();
+    if (m1 == NULL)
+    {
+      // Handle error case
+      printf("Error: Can't get m1 matrix\n");
+      pthread_mutex_unlock(&mutex);
+      continue;
+    }
+
     consStats->matrixtotal++; // Count consumption
     consStats->sumtotal += SumMatrix(m1);
     increment_cnt(consCounter);
@@ -191,6 +214,14 @@ void *cons_worker(void *arg)
         pthread_cond_wait(&not_empty, &mutex);
       }
       m2 = get();
+      if (m2 == NULL)
+      {
+        printf("Error: Can't get m2 matrix\n");
+        // Handle error case
+        pthread_mutex_unlock(&mutex);
+        continue;
+      }
+
       consStats->matrixtotal++; // Count consumption
       consStats->sumtotal += SumMatrix(m2);
       increment_cnt(consCounter);

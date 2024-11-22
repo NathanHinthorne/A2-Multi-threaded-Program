@@ -17,7 +17,7 @@
 int MAX_BOUNDED_BUFFER_SIZE;
 
 // Number of matrices to produce/consume
-#define LOOPS 1000 //! NOTE: when loop size and max size are different, program will never terminate
+#define LOOPS 1500
 int NUMBER_OF_MATRICES;
 
 // MATRIX MODE FLAG
