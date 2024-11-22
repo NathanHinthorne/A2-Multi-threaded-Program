@@ -13,11 +13,11 @@
 #define OUTPUT 0
 
 // Size of the buffer ARRAY  (see ch. 30, section 2, producer/consumer)
-#define MAX 100
+#define MAX 200
 int MAX_BOUNDED_BUFFER_SIZE;
 
 // Number of matrices to produce/consume
-#define LOOPS 1500
+#define LOOPS 1200
 int NUMBER_OF_MATRICES;
 
 // MATRIX MODE FLAG
