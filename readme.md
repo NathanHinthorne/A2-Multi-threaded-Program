@@ -20,7 +20,7 @@
 
 - Originally, we were grabbing two matrices on every step of the while loop in prod_worker(). Claude.ai gave us code for changing prod_worker() to grab one matrix at a time.
 
-- After writing nearly the entire `prod_worker` and `cons_worker` functions from scratch, we used Claude.ai to simplify the code.
+- After writing nearly the entire `prod_worker` and `cons_worker` functions from scratch, we used Claude.ai to simplify parts of the code.
 
 ## Credits
 
