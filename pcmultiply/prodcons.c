@@ -48,8 +48,8 @@ int put(Matrix *value)
     return -1;
   }
 
-  buffer[headIndex] = value;
   printf("PUT Matrix:\n");
+  buffer[headIndex] = value;
   DisplayMatrix(buffer[headIndex], stdout);
 
   headIndex = (headIndex + 1) % MAX_BOUNDED_BUFFER_SIZE;
@@ -79,10 +79,12 @@ Matrix *get()
   return value;
 }
 
+// Bounded buffer mutex and condition variables
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t not_full = PTHREAD_COND_INITIALIZER;
 pthread_cond_t not_empty = PTHREAD_COND_INITIALIZER;
 
+// flag to indicate when production is complete
 int finishedProducing = 0;
 
 // Matrix PRODUCER worker thread
@@ -137,7 +139,7 @@ void *prod_worker(void *arg)
     prodStats->matrixtotal++;
     prodStats->sumtotal += SumMatrix(matrix);
 
-    // increment counter (indicating a new matrix was added)
+    // Update synchronized counter
     increment_cnt(prodCounter);
 
     // signal consumers
@@ -146,6 +148,7 @@ void *prod_worker(void *arg)
     pthread_mutex_unlock(&mutex);
   }
 
+  // lock to avoid race condition
   pthread_mutex_lock(&mutex);
   finishedProducing = 1;
   pthread_cond_broadcast(&not_empty); // Wake up all consumers to avoid deadlock
@@ -197,8 +200,11 @@ void *cons_worker(void *arg)
 
     m1 = get();
 
+    // Update this thread's statistics
     consStats->matrixtotal++; // Count consumption
     consStats->sumtotal += SumMatrix(m1);
+
+    // Update synchronized counter
     increment_cnt(consCounter);
 
     /* Originally, we were grabbing
@@ -211,7 +217,6 @@ void *cons_worker(void *arg)
       // keep waiting when buffer is empty
       while (get_cnt(currBufferSize) <= 0)
       {
-        pthread_cond_signal(&not_full);
         if (finishedProducing && get_cnt(currBufferSize) == 0)
         {
           FreeMatrix(m1);
@@ -231,8 +236,11 @@ void *cons_worker(void *arg)
 
       m2 = get();
 
-      consStats->matrixtotal++; // Count consumption
+      // Update this thread's statistics
+      consStats->matrixtotal++;
       consStats->sumtotal += SumMatrix(m2);
+
+      // Update synchronized counter
       increment_cnt(consCounter);
 
       m3 = MatrixMultiply(m1, m2);
@@ -247,12 +255,14 @@ void *cons_worker(void *arg)
       }
     }
 
+    // show results
     DisplayMatrix(m1, stdout);
     printf("   X\n");
     DisplayMatrix(m2, stdout);
     printf("   =\n");
     DisplayMatrix(m3, stdout);
 
+    // clean up
     FreeMatrix(m1);
     FreeMatrix(m2);
     FreeMatrix(m3);
