@@ -22,8 +22,7 @@
 Matrix **buffer;
 int headIndex = 0;
 int tailIndex = 0;
-int currBufferSize = 0;
-
+counter_t *currBufferSize;
 Matrix **initBoundedBuffer()
 {
   buffer = (Matrix **)malloc(sizeof(Matrix *) * MAX_BOUNDED_BUFFER_SIZE);
@@ -31,7 +30,8 @@ Matrix **initBoundedBuffer()
   {
     buffer[n] = (Matrix *)malloc(sizeof(Matrix));
   }
-
+  currBufferSize = (counter_t *)malloc(sizeof(counter_t));
+  init_cnt(currBufferSize); // initialize counter to 0
   return buffer;
 }
 
@@ -51,13 +51,13 @@ int put(Matrix *value)
     tailIndex = (tailIndex + 1) % MAX_BOUNDED_BUFFER_SIZE;
   }
 
-  currBufferSize++;
+  increment_cnt(currBufferSize);
   return 0;
 }
 
 Matrix *get()
 {
-  assert(currBufferSize > 0); // there must be at least 1 matrix to retrieve
+  assert(get_cnt(currBufferSize) > 0); // there must be at least 1 matrix to retrieve
 
   Matrix *value = buffer[tailIndex];
 
@@ -68,7 +68,7 @@ Matrix *get()
     tailIndex = (tailIndex + 1) % MAX_BOUNDED_BUFFER_SIZE;
   }
 
-  currBufferSize--;
+  decrement_cnt(currBufferSize);
   return value;
 }
 
@@ -104,9 +104,9 @@ void *prod_worker(void *arg)
     pthread_mutex_lock(&mutex);
 
     // keep waiting when buffer is full
-    while (currBufferSize >= MAX_BOUNDED_BUFFER_SIZE)
+    while (get_cnt(currBufferSize) >= MAX_BOUNDED_BUFFER_SIZE)
     {
-      printf("DEBUG: Buffer is full\n");
+      printf("DEBUG: Buffer is full. Buffer Size: %d\n", get_cnt(currBufferSize));
       pthread_cond_wait(&not_full, &mutex);
     }
 
@@ -127,7 +127,11 @@ void *prod_worker(void *arg)
     pthread_mutex_unlock(&mutex);
   }
 
+  // TODO check that it is working concurrently... How can we be certain.
+  pthread_mutex_lock(&mutex);
   finishedProducing = 1;
+  pthread_cond_broadcast(&not_empty); // Wake up all consumers to aovid deadlock
+  pthread_mutex_unlock(&mutex);
 
   return (void *)prodStats;
 }
@@ -148,11 +152,13 @@ void *cons_worker(void *arg)
     pthread_mutex_lock(&mutex);
 
     // keep waiting when buffer is empty
-    while (currBufferSize <= 0)
+    while (get_cnt(currBufferSize) <= 0)
     {
-      if (finishedProducing == 1)
+      printf("DEBUG: Buffer is empty. Buffer Size: %d\n", get_cnt(currBufferSize));
+      if (finishedProducing && get_cnt(currBufferSize) == 0)
       {
         printf("DEBUG: Returning from 1st while\n");
+        pthread_mutex_unlock(&mutex);
         return (void *)consStats;
       }
       pthread_cond_wait(&not_empty, &mutex);
@@ -171,22 +177,18 @@ void *cons_worker(void *arg)
     while (!matrixIsValid)
     {
       // keep waiting when buffer is empty
-      // TODO check that this is good, maybe a chance that get is still producing and consumer won't consume the last matrix becasue it returned.
-      // TODO consider calling pthread_cond_wait
-      // if (currBufferSize <= 0)
-      // {
-      //   return (void *)consStats;
-      // }
-      // keep waiting when buffer is empty
-      while (currBufferSize <= 0)
+      while (get_cnt(currBufferSize) <= 0)
       {
-        printf("DEBUG: Buffer is empty\n");
-        if (finishedProducing == 1)
+        printf("DEBUG: Buffer is empty. Buffer Size: %d\n", get_cnt(currBufferSize));
+        pthread_cond_signal(&not_full);
+        if (finishedProducing && get_cnt(currBufferSize) == 0)
         {
           printf("DEBUG: Returning from 2nd while\n");
+          FreeMatrix(m1);
+          pthread_mutex_unlock(&mutex);
           return (void *)consStats;
         }
-        pthread_cond_wait(&not_full, &mutex);
+        pthread_cond_wait(&not_empty, &mutex);
       }
       m2 = get();
       consStats->matrixtotal++; // Count consumption
