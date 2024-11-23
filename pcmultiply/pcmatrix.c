@@ -28,6 +28,8 @@
  *
  *  University of Washington, Tacoma
  *  TCSS 422 - Operating Systems
+ *
+ * Authors: Nathan Hinthorne and Caleb Krauter
  */
 
 #include <stdio.h>

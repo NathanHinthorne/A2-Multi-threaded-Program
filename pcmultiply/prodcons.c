@@ -7,6 +7,8 @@
  *
  *University of Washington, Tacoma
  * TCSS 422 - Operating Systems
+ *
+ * Authors: Nathan Hinthorne and Caleb Krauter
  */
 
 // Include only libraries for this module
@@ -26,6 +28,7 @@ counter_t *currBufferSize;
 Matrix **initBoundedBuffer()
 {
   buffer = (Matrix **)malloc(sizeof(Matrix *) * MAX_BOUNDED_BUFFER_SIZE);
+
   currBufferSize = (counter_t *)malloc(sizeof(counter_t));
   init_cnt(currBufferSize); // initialize counter to 0
   return buffer;
